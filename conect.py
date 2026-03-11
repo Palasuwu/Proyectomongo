@@ -4,6 +4,7 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from actualizaciones import actualizar_registros
 from consultas import consultar_catalogo_restaurantes
+from reportes import ejecutar_reportes 
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
@@ -113,8 +114,7 @@ def main():
             print("Función en construcción...")
 
         elif opcion == '5':
-            print("\n--- Reportes (Aggregation Framework) ---")
-            print("Función en construcción...")
+            ejecutar_reportes(db)
 
         elif opcion == '6':
             print("\n--- Galería GridFS ---")
