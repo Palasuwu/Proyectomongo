@@ -6,6 +6,7 @@ from actualizaciones import actualizar_registros
 from consultas import consultar_catalogo_restaurantes
 from reportes import ejecutar_reportes
 from creacion import crear_documentos
+from eliminaciones import eliminar_registros
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
@@ -110,8 +111,7 @@ def main():
             actualizar_registros(db)
 
         elif opcion == '4':
-            print("\n--- Eliminación de Datos ---")
-            print("Función en construcción...")
+            eliminar_registros(db)
 
         elif opcion == '5':
             ejecutar_reportes(db)
