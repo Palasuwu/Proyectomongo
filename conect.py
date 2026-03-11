@@ -4,7 +4,8 @@ from bson.objectid import ObjectId
 from datetime import datetime
 from actualizaciones import actualizar_registros
 from consultas import consultar_catalogo_restaurantes
-from reportes import ejecutar_reportes 
+from reportes import ejecutar_reportes
+from creacion import crear_documentos
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
@@ -99,8 +100,7 @@ def main():
         opcion = input("Selecciona una opción de la rúbrica (1-8): ")
 
         if opcion == '1':
-            print("\n--- Módulo de Creación ---")
-            print("Función en construcción...")
+            crear_documentos(db)
 
         elif opcion == '2':
             # Llamamos a la función dinámica
