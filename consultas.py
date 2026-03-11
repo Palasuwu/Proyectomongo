@@ -1,51 +1,52 @@
 def consultar_catalogo_restaurantes(db):
     """
-    Realiza una consulta multi-colección (lookup) cumpliendo con:
-    Filtros, Proyecciones, Sort, Skip y Límite[cite: 131].
-    Incluye un submenú dinámico de categorías usando distinct().
+    Realiza una consulta multi-colección (lookup) con:
+    Filtros dinámicos, Proyecciones ($size), Sort, Skip y Límite dinámicos.
     """
     print("\n" + "-"*40)
     print("   CATÁLOGO DE RESTAURANTES   ")
     print("-"*40)
 
     try:
-        # 1. Obtener todas las categorías únicas de la base de datos
+        # --- 1. FILTRO DINÁMICO (Categoría) ---
         categorias_unicas = db["restaurantes"].distinct("categorias")
-        
-        if not categorias_unicas:
-            print("No hay categorías registradas en la base de datos.")
-            return
-
-        # 2. Generar el submenú dinámico
-        print("\nCategorías disponibles:")
-        print("0. 🌟 Mostrar TODOS (Sin filtro)")
-        for i, categoria in enumerate(categorias_unicas, start=1):
-            print(f"{i}.  {categoria}")
-
-        # 3. Capturar y validar la selección del usuario
-        seleccion = input(f"\nSelecciona una opción (0-{len(categorias_unicas)}): ")
-        
         categoria_filtro = None
-        if seleccion.isdigit():
-            opc = int(seleccion)
-            if 1 <= opc <= len(categorias_unicas):
-                categoria_filtro = categorias_unicas[opc - 1]
-                print(f"\nBuscando restaurantes en la categoría: '{categoria_filtro}'...")
-            elif opc == 0:
-                print("\nBuscando todos los restaurantes...")
-            else:
-                print("\nOpción fuera de rango. Buscando todos por defecto...")
-        else:
-            print("\nEntrada inválida. Buscando todos por defecto...")
+        
+        if categorias_unicas:
+            print("\nCategorías disponibles:")
+            print("0. 🌟 Mostrar TODOS (Sin filtro)")
+            for i, categoria in enumerate(categorias_unicas, start=1):
+                print(f"{i}. 🍔 {categoria}")
 
-        # 4. Construir el pipeline de agregación [cite: 131]
+            seleccion = input(f"\nSelecciona una categoría (0-{len(categorias_unicas)}): ")
+            if seleccion.isdigit() and 1 <= int(seleccion) <= len(categorias_unicas):
+                categoria_filtro = categorias_unicas[int(seleccion) - 1]
+                print(f"\nFiltro aplicado: '{categoria_filtro}'")
+            else:
+                print("\nBuscando todos por defecto...")
+
+        # --- 2. PAGINACIÓN DINÁMICA (Limit y Skip) ---
+        try:
+            limite_input = input("\n¿Cuántos restaurantes deseas ver por página? (Default 5): ")
+            limite = int(limite_input) if limite_input.strip() else 5
+        except ValueError:
+            limite = 5
+            
+        try:
+            pagina_input = input("¿Qué página deseas ver? (Default 1): ")
+            pagina = int(pagina_input) if pagina_input.strip() else 1
+        except ValueError:
+            pagina = 1
+
+        # Cálculo matemático del skip
+        skip = (pagina - 1) * limite
+
+        # --- 3. CONSTRUCCIÓN DEL PIPELINE ---
         pipeline = []
 
-        # Filtro ($match) - Solo se agrega si el usuario eligió una categoría específica
         if categoria_filtro:
             pipeline.append({"$match": {"categorias": categoria_filtro}})
 
-        # Multi-colección ($lookup) -> Unir Restaurantes con ArticulosMenu [cite: 131]
         pipeline.append({
             "$lookup": {
                 "from": "articulosMenu",       
@@ -55,36 +56,33 @@ def consultar_catalogo_restaurantes(db):
             }
         })
 
-        # Ordenamiento ($sort) -> Alfabético por nombre del restaurante [cite: 131]
         pipeline.append({"$sort": {"nombre": 1}})
+        pipeline.append({"$skip": skip})
+        pipeline.append({"$limit": limite})
 
-        # Skip y Límite ($skip, $limit) -> Paginación [cite: 131]
-        pipeline.append({"$skip": 0})
-        pipeline.append({"$limit": 5})
-
-        # Proyección ($project) -> Mostrar solo la información necesaria [cite: 131]
         pipeline.append({
             "$project": {
                 "_id": 0,                      
                 "nombre": 1,                   
-                "categorias": 1,               
+                "categorias": 1, 
+                "total_platillos": {"$size": "$platillos"}, # Proyección avanzada: Cuenta el arreglo
                 "platillos.nombre": 1,         
                 "platillos.precio": 1          
             }
         })
 
-        # 5. Ejecutar la consulta
+        # --- 4. EJECUCIÓN ---
         resultados = list(db["restaurantes"].aggregate(pipeline))
 
         if not resultados:
-            print("No se encontraron restaurantes con esos criterios.")
+            print(f"\nNo se encontraron resultados en la página {pagina}.")
             return
 
-        # 6. Imprimir los resultados de forma amigable
-        print(f"\nSe encontraron {len(resultados)} restaurante(s) (Mostrando máx 5):")
+        print(f"\n--- Resultados (Página {pagina} | Mostrando hasta {limite} restaurantes) ---")
         for rest in resultados:
-            print(f"\n Restaurante: {rest.get('nombre')}")
+            print(f"\n🏢 Restaurante: {rest.get('nombre')}")
             print(f"   Categorías: {', '.join(rest.get('categorias', []))}")
+            print(f"   Cantidad de platillos en menú: {rest.get('total_platillos', 0)}")
             print("   Menú:")
             platillos = rest.get('platillos', [])
             if platillos:

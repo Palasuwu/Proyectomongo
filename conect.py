@@ -2,10 +2,11 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from bson.objectid import ObjectId
 from datetime import datetime
+from actualizaciones import actualizar_registros
 from consultas import consultar_catalogo_restaurantes
 
 # ==========================================
-# 1. CONFIGURACIÓN Y CONEXIÓN A LA BASE DE DATOS
+# 1. CONFIGURACIÓN Y CONEXIÓN
 # ==========================================
 uri = "mongodb+srv://gon23152_db_ikeel:MGECARG10@cluster0.uqhzj8v.mongodb.net/"
 client = MongoClient(uri, server_api=ServerApi('1'))
@@ -20,10 +21,12 @@ def conectar_bd():
         return None
 
 # ==========================================
-# 2. FUNCIONES DE LÓGICA DE NEGOCIO (TRANSACCIÓN ACID)
+# 2. FUNCIONES DE LÓGICA (QUERYS Y TRANSACCIONES)
 # ==========================================
+
+
 def confirmar_pedido_transaccion(client, db, usuario_id_str, restaurante_id_str, items_input):
-    """Ejecuta la creación de un pedido y la actualización de métricas bajo una transacción ACID."""
+    """Opción 7: Ejecuta la creación de un pedido sin romper el JSON Schema estricto."""
     with client.start_session() as session:
         try:
             with session.start_transaction():
@@ -51,33 +54,22 @@ def confirmar_pedido_transaccion(client, db, usuario_id_str, restaurante_id_str,
                     "items": items_pedido
                 }
                 
+                # Paso 1: Crear e insertar la orden
                 orden_insertada = db["ordenes"].insert_one(nueva_orden, session=session)
-                print(f"-> Orden creada temporalmente con ID: {orden_insertada.inserted_id}")
+                print(f"-> Orden creada exitosamente con ID: {orden_insertada.inserted_id}")
                 
-                for item in items_pedido:
-                    db["articulosMenu"].update_one(
-                        {"_id": ObjectId(item['articuloId'])},
-                        {"$inc": {"cantidadVendida": item['cantidad']}}, 
-                        session=session
-                    )
-                print("-> Inventario de artículos actualizado.")
+                # OMITIMOS el $inc de inventario para respetar el JSON Schema (additionalProperties: False)
                 
-                db["restaurantes"].update_one(
-                    {"_id": ObjectId(restaurante_id_str)},
-                    {"$inc": {"totalPedidosHistoricos": 1}},
-                    session=session
-                )
-                print("-> Estadísticas del restaurante actualizadas.")
-                
-                print("¡Transacción exitosa! Todos los cambios guardados.")
+                print("¡Transacción exitosa! La orden ha hecho commit en la base de datos.")
                 return orden_insertada.inserted_id
                 
         except Exception as e:
             print(f"Error detectado. Haciendo ROLLBACK de la transacción. Detalle: {e}")
             return None
 
+
 # ==========================================
-# 3. INTERFAZ DE USUARIO (EL MENÚ PRINCIPAL)
+# 3. INTERFAZ DE USUARIO (MENÚ PRINCIPAL)
 # ==========================================
 def mostrar_menu():
     print("\n" + "="*50)
@@ -110,11 +102,11 @@ def main():
             print("Función en construcción...")
 
         elif opcion == '2':
+            # Llamamos a la función dinámica
             consultar_catalogo_restaurantes(db)
 
         elif opcion == '3':
-            print("\n--- Actualización de Datos ---")
-            print("Función en construcción...")
+            actualizar_registros(db)
 
         elif opcion == '4':
             print("\n--- Eliminación de Datos ---")
@@ -130,23 +122,51 @@ def main():
 
         elif opcion == '7':
             print("\n--- Realizar Pedido (Transacción) ---")
-            # Datos quemados
-            id_usuario = "69ac7acf39b76d2a3370e5ab"      
-            id_restaurante = "69ac7daa39b76d2a3370e5bc"  
+            
+            # --- DATOS DINÁMICOS  ---
+            # 1. Buscamos el primer usuario que exista
+            usuario_db = db["usuarios"].find_one()
+            if not usuario_db:
+                print("❌ No hay usuarios en la base de datos.")
+                continue
+                
+            # 2. Buscamos el primer restaurante que exista
+            restaurante_db = db["restaurantes"].find_one()
+            if not restaurante_db:
+                print("❌ No hay restaurantes en la base de datos.")
+                continue
+                
+            # 3. Buscamos un artículo que sea de ESE restaurante
+            articulo_db = db["articulosMenu"].find_one({"restauranteId": restaurante_db["_id"]})
+            if not articulo_db:
+                print(f"❌ El restaurante '{restaurante_db.get('nombre')}' no tiene artículos.")
+                continue
+            
+            # Extraemos los IDs
+            id_usuario_real = str(usuario_db["_id"])
+            id_restaurante_real = str(restaurante_db["_id"])
+            
+            # Armamos el carrito dinámico
             carrito_compras = [{
-                "articuloId": "69ac7f1339b76d2a3370e5c7", 
-                "nombreSnapshot": "Hamburguesa Doble Queso",
-                "precioUnitarioSnapshot": 45.5,
-                "cantidad": 2
+                "articuloId": str(articulo_db["_id"]), 
+                "nombreSnapshot": articulo_db.get("nombre", "Artículo Desconocido"),
+                "precioUnitarioSnapshot": articulo_db.get("precio", 0.0),
+                "cantidad": 2 # Pedimos 2 de este artículo por defecto para la prueba
             }]
-            confirmar_pedido_transaccion(client, db, id_usuario, id_restaurante, carrito_compras)
+            
+            print(f"👤 Cliente: {usuario_db.get('nombre')}")
+            print(f"🏢 Restaurante: {restaurante_db.get('nombre')}")
+            print(f"🍔 Ordenando: 2x {articulo_db.get('nombre')} (Q{articulo_db.get('precio')})")
+            
+            # Ejecutamos
+            confirmar_pedido_transaccion(client, db, id_usuario_real, id_restaurante_real, carrito_compras)
             
         elif opcion == '8':
             print("\nSaliendo del sistema... ¡Hasta pronto!")
             break
             
         else:
-            print("\n Opción no válida. Intenta de nuevo.")
+            print("\n❌ Opción no válida. Intenta de nuevo.")
 
 if __name__ == "__main__":
     main()
