@@ -2,6 +2,7 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from bson.objectid import ObjectId
 from datetime import datetime
+from consultas import consultar_catalogo_restaurantes
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN A LA BASE DE DATOS
@@ -109,8 +110,7 @@ def main():
             print("Función en construcción...")
 
         elif opcion == '2':
-            print("\n--- Catálogo y Consultas Avanzadas ---")
-            print("Función en construcción...")
+            consultar_catalogo_restaurantes(db)
 
         elif opcion == '3':
             print("\n--- Actualización de Datos ---")
