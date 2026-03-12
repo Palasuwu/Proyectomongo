@@ -10,31 +10,38 @@ def actualizar_registros(db):
     
     if opc == '1':
         print("\n--- Actualizar UN Restaurante ---")
-        # Buscamos los restaurantes disponibles para que el usuario elija
-        restaurantes = list(db["restaurantes"].find({}, {"nombre": 1, "descripcion": 1}))
+        restaurantes = list(db["restaurantes"].find({}, {"nombre": 1, "descripcion": 1, "categorias": 1}))
         if not restaurantes:
             print(" No hay restaurantes registrados.")
             return
-            
-        for i, rest in enumerate(restaurantes, start=1):
-            print(f"{i}. {rest.get('nombre')} (Desc actual: {rest.get('descripcion', 'Sin descripción')})")
-            
-        seleccion = input(f"\nElige el número del restaurante a editar (1-{len(restaurantes)}): ")
         
+        for i, rest in enumerate(restaurantes, start=1):
+            categorias_actuales = ", ".join(rest.get("categorias", []))
+            print(f"{i}. {rest.get('nombre')}")
+            print(f"   Desc actual: {rest.get('descripcion', 'Sin descripción')}")
+            print(f"   Categorías actuales: {categorias_actuales}")
+            print("-" * 40)
+        
+        seleccion = input(f"\nElige el número del restaurante a editar (1-{len(restaurantes)}): ")
+    
         if seleccion.isdigit() and 1 <= int(seleccion) <= len(restaurantes):
             rest_elegido = restaurantes[int(seleccion) - 1]
+        
             nueva_desc = input("Ingresa la nueva descripción: ")
-            
-            # Ejecutamos update_one
+            nueva_categoria = input("Ingresa una nueva categoría para agregar: ")
+
             resultado = db["restaurantes"].update_one(
                 {"_id": rest_elegido["_id"]},
-                {"$set": {"descripcion": nueva_desc}}
+                {
+                    "$set": {"descripcion": nueva_desc},
+                    "$addToSet": {"categorias": nueva_categoria}
+                }
             )
-            
+        
             if resultado.modified_count > 0:
-                print(" ¡Descripción actualizada correctamente!")
+                print("✅ Descripción actualizada y categoría agregada correctamente.")
             else:
-                print(" No se hicieron cambios (quizá ingresaste la misma descripción que ya tenía).")
+                print("⚠️ No se realizaron cambios (quizá ingresaste los mismos datos).")
         else:
             print(" Opción inválida.")
 
