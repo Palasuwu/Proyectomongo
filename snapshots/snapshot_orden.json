@@ -1,0 +1,42 @@
+{
+    "tipoSnapshot": "orden",
+    "fechaSnapshot": "2026-03-12T18:29:33.077591",
+    "documentoOriginal": {
+        "_id": "50eb3939606e65f577edb1af",
+        "usuarioId": "69b0a164e895a9131203c861",
+        "restauranteId": "69b0a21ee895a9131203c87c",
+        "estado": "ENTREGADA",
+        "total": 457.3,
+        "fechaCreacion": "2026-03-30T23:58:39",
+        "items": [
+            {
+                "articuloId": "69b0a440e895a9131203c915",
+                "nombreSnapshot": "Plato Especial 1",
+                "precioUnitarioSnapshot": 71.94,
+                "cantidad": 3,
+                "subtotal": 215.82
+            },
+            {
+                "articuloId": "69b0a440e895a9131203c916",
+                "nombreSnapshot": "Plato Especial 2",
+                "precioUnitarioSnapshot": 59.78,
+                "cantidad": 2,
+                "subtotal": 119.56
+            },
+            {
+                "articuloId": "69b0a440e895a9131203c918",
+                "nombreSnapshot": "Bebida Especial",
+                "precioUnitarioSnapshot": 23.76,
+                "cantidad": 1,
+                "subtotal": 23.76
+            },
+            {
+                "articuloId": "69b0a440e895a9131203c919",
+                "nombreSnapshot": "Postre",
+                "precioUnitarioSnapshot": 49.08,
+                "cantidad": 2,
+                "subtotal": 98.16
+            }
+        ]
+    }
+}

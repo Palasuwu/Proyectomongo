@@ -7,9 +7,8 @@ from consultas import consultar_catalogo_restaurantes
 from reportes import ejecutar_reportes
 from creacion import crear_documentos
 from eliminaciones import eliminar_registros
-
-# Eliminar si no funciona bien
 from snapshots import manejar_snapshots_gridfs
+from pedidos import realizar_pedido_interactivo
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
@@ -120,49 +119,11 @@ def main():
             ejecutar_reportes(db)
 
         elif opcion == '6':
-            # De nuevo, eliminar si no funciona bien
+            # Eliminar si no funciona bien
             manejar_snapshots_gridfs(db)
 
         elif opcion == '7':
-            print("\n--- Realizar Pedido (Transacción) ---")
-            
-            # --- DATOS DINÁMICOS  ---
-            # 1. Buscamos el primer usuario que exista
-            usuario_db = db["usuarios"].find_one()
-            if not usuario_db:
-                print("❌ No hay usuarios en la base de datos.")
-                continue
-                
-            # 2. Buscamos el primer restaurante que exista
-            restaurante_db = db["restaurantes"].find_one()
-            if not restaurante_db:
-                print("❌ No hay restaurantes en la base de datos.")
-                continue
-                
-            # 3. Buscamos un artículo que sea de ESE restaurante
-            articulo_db = db["articulosMenu"].find_one({"restauranteId": restaurante_db["_id"]})
-            if not articulo_db:
-                print(f"❌ El restaurante '{restaurante_db.get('nombre')}' no tiene artículos.")
-                continue
-            
-            # Extraemos los IDs
-            id_usuario_real = str(usuario_db["_id"])
-            id_restaurante_real = str(restaurante_db["_id"])
-            
-            # Armamos el carrito dinámico
-            carrito_compras = [{
-                "articuloId": str(articulo_db["_id"]), 
-                "nombreSnapshot": articulo_db.get("nombre", "Artículo Desconocido"),
-                "precioUnitarioSnapshot": articulo_db.get("precio", 0.0),
-                "cantidad": 2 # Pedimos 2 de este artículo por defecto para la prueba
-            }]
-            
-            print(f"👤 Cliente: {usuario_db.get('nombre')}")
-            print(f"🏢 Restaurante: {restaurante_db.get('nombre')}")
-            print(f"🍔 Ordenando: 2x {articulo_db.get('nombre')} (Q{articulo_db.get('precio')})")
-            
-            # Ejecutamos
-            confirmar_pedido_transaccion(client, db, id_usuario_real, id_restaurante_real, carrito_compras)
+            realizar_pedido_interactivo(client, db, confirmar_pedido_transaccion)
             
         elif opcion == '8':
             print("\nSaliendo del sistema... ¡Hasta pronto!")
