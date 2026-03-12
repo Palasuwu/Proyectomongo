@@ -13,7 +13,8 @@ from pedidos import realizar_pedido_interactivo
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
 # ==========================================
-uri = "mongodb+srv://gon23152_db_ikeel:MGECARG10@cluster0.uqhzj8v.mongodb.net/"
+# uri = "mongodb+srv://gon23152_db_ikeel:MGECARG10@cluster0.uqhzj8v.mongodb.net/"
+uri = "mongodb://gon23152_db_ikeel:<db_password>@ac-dnpa0km-shard-00-00.uqhzj8v.mongodb.net:27017,ac-dnpa0km-shard-00-01.uqhzj8v.mongodb.net:27017,ac-dnpa0km-shard-00-02.uqhzj8v.mongodb.net:27017/?ssl=true&replicaSet=atlas-tg4y69-shard-0&authSource=admin&appName=Cluster0"
 client = MongoClient(uri, server_api=ServerApi('1'))
 
 def conectar_bd():
