@@ -8,6 +8,9 @@ from reportes import ejecutar_reportes
 from creacion import crear_documentos
 from eliminaciones import eliminar_registros
 
+# Eliminar si no funciona bien
+from snapshots import manejar_snapshots_gridfs
+
 # ==========================================
 # 1. CONFIGURACIÓN Y CONEXIÓN
 # ==========================================
@@ -117,8 +120,8 @@ def main():
             ejecutar_reportes(db)
 
         elif opcion == '6':
-            print("\n--- Galería GridFS ---")
-            print("Función en construcción...")
+            # De nuevo, eliminar si no funciona bien
+            manejar_snapshots_gridfs(db)
 
         elif opcion == '7':
             print("\n--- Realizar Pedido (Transacción) ---")
