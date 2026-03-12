@@ -18,7 +18,7 @@ def crear_documentos(db):
     if opcion == '1':
         nombre = input("Nombre: ")
         email = input("Email: ")
-        password = input("Password: ")
+        password = input("Password: (6 digitos mínimo) ")
 
         usuario = {
             "nombre": nombre,
